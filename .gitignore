@@ -1,2 +1,4 @@
 data/
 Figures/
+.vscode/
+__pycache__/
