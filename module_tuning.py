@@ -104,5 +104,5 @@ def plot_average_firing_rate(shape, cell_indices):
 
 # Example usage:
 shape = 'Sqr'
-cell_indices = [4, 7, 18, 25, 29, 30, 31, 33, 37, 43, 51, 53, 54, 55, 60, 65, 66, 67]
+cell_indices = [9, 10, 13, 15, 21, 22, 23, 36, 38, 41, 42, 47, 52, 59, 61, 73]
 plot_average_firing_rate(shape, cell_indices)
