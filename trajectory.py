@@ -4,7 +4,8 @@ import numpy as np
 
 def rat_trajectory(shape):
     # shape = 'Hex'
-    filename = f'Raw data-B6_8_1_{shape}-Trial     1'
+    # filename = f'Raw data-B6_8_1_{shape}-Trial     1'
+    filename = f'mec_inactivation/MEC_inactivation/Inactivation_move'
 
     df = pd.read_excel(f'data/{filename}.xlsx', header=34, skiprows=[35])
     df = df.replace('-', np.nan)
