@@ -3,9 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 def rat_trajectory(shape):
-    # shape = 'Hex'
-    # filename = f'Raw data-B6_8_1_{shape}-Trial     1'
-    filename = f'mec_inactivation/MEC_inactivation/Inactivation_move'
+    filename = f'Raw data-B6_8_1_{shape}-Trial     1'
 
     df = pd.read_excel(f'data/{filename}.xlsx', header=34, skiprows=[35])
     df = df.replace('-', np.nan)
@@ -19,31 +17,49 @@ def rat_trajectory(shape):
 
     return time, x_center, y_center, head_dir, vel
 
-'''# Create the plot
-plt.figure(figsize=(10, 8))
+def rat_trajectory_mec(inactivation):
+    if inactivation:
+        filename = f'mec_inactivation/MEC_inactivation/Inactivation_move'
+    else:
+        filename = f'mec_inactivation/MEC_inactivation/Control_move'
 
-# Create a scatter plot with points colored by time
-scatter = plt.scatter(x_center, y_center, c=time, cmap='viridis', s=10)
+    df = pd.read_excel(f'data/{filename}.xlsx', header=34, skiprows=[35])
+    df = df.replace('-', np.nan)
 
-# Add a colorbar to show the time progression
-cbar = plt.colorbar(scatter)
-cbar.set_label('Time (s)', rotation=270, labelpad=15)
+    # Extract the required columns
+    time = df['Recording time']
+    x_center = df['X center']
+    y_center = df['Y center']
+    head_dir = df['Head direction']
+    vel = df['Velocity']
 
-# Add labels and title
-plt.xlabel('X center (cm)')
-plt.ylabel('Y center (cm)')
-plt.title('(X, Y) Coordinates Evolving Across Time')
+    return time, x_center, y_center, head_dir, vel
 
-# Add arrows to show direction of movement
-for i in range(len(x_center) - 1):
-    plt.arrow(x_center[i], y_center[i], 
-              x_center[i+1] - x_center[i], y_center[i+1] - y_center[i],
-              head_width=0.3, head_length=0.3, fc='r', ec='r', alpha=0.3)
 
-# Invert y-axis to match typical coordinate systems (optional)
-plt.gca().invert_yaxis()
+def rat_trajectory_PV(inactivation, mousenum):
+    if mousenum == 1 and not inactivation:
+        filestring = 'mouse1 - base and opto/Raw data-Square50_Base1_PV5_6-Trial     1'
+    elif mousenum == 1 and inactivation:
+        filestring = 'mouse1 - base and opto/Raw data-Square50_Opto1_PV5_6-Trial     1'
+    elif mousenum == 2 and not inactivation:
+        filestring = 'mouse2 - base and opto/Raw data-Square50_Base_PV5_7-Trial     1'
+    elif mousenum == 2 and inactivation:
+        filestring = 'mouse2 - base and opto/Raw data-Square50_Opto_PV5_7-Trial     1'
+    elif mousenum == 3 and not inactivation:
+        filestring = 'mouse3 - base and chemo/Raw data-PV6_2_2_Base_DL-Trial     1'
+    elif mousenum == 3 and inactivation:
+        filestring = 'mouse3 - base and chemo/Raw data-PV6_2_2_Chemo_DL-Trial     1'
 
-# Show the plot
-plt.grid(True)
-plt.savefig(f'trajectory_{shape}.png')
-plt.show()'''
+    filename = f'PV_inactivation/JY/{filestring}'
+
+    df = pd.read_excel(f'data/{filename}.xlsx', header=34, skiprows=[35])
+    df = df.replace('-', np.nan)
+
+    # Extract the required columns
+    time = df['Recording time']
+    x_center = df['X center']
+    y_center = df['Y center']
+    head_dir = df['Head direction']
+    vel = df['Velocity']
+
+    return time, x_center, y_center, head_dir, vel

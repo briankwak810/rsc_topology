@@ -1,26 +1,46 @@
 import pandas as pd
+import openpyxl
 import csv
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import numpy as np
 from scipy.stats import binned_statistic_2d
-from trajectory import rat_trajectory
+from trajectory import rat_trajectory, rat_trajectory_mec, rat_trajectory_PV
 from scipy.ndimage import gaussian_filter
 from matplotlib.colors import Normalize
 
+########## CURRENTLY PV VERSION! ##############
 #Perameters
-shape = 'Tri'
+inactivation = True
+mouse_num = 3
 cell_num = 1
 
-# for shape in ['Tri', 'Sqr', 'Hex']: ###########
 cell_name = f' C{cell_num:02}'
+
+# for shape in ['Tri', 'Sqr', 'Hex']: ###########
 # spk_filename = f'data/B6_8_1_{shape}_Spike.csv'
 # trc_filename = f'data/B6_8_1_{shape}_Trace.csv'
 
-spk_filename = f'data/mec_inactivation/MEC_inactivation/Spike.csv'
-trc_filename = f'data/mec_inactivation/MEC_inactivation/Trace.csv'
+if mouse_num == 1 and not inactivation:
+    spk_filename = f'data/PV_inactivation/JY/mouse1 - base and opto/Square50_B1O1B2O2_PV5_6_Base1_deconv.xlsx'
+    trc_filename = f'data/PV_inactivation/JY/mouse1 - base and opto/Square50_B1O1B2O2_PV5_6_Base1.xlsx'
+elif mouse_num == 1 and inactivation:
+    spk_filename = f'data/PV_inactivation/JY/mouse1 - base and opto/Square50_B1O1B2O2_PV5_6_Opto1_deconv.xlsx'
+    trc_filename = f'data/PV_inactivation/JY/mouse1 - base and opto/Square50_B1O1B2O2_PV5_6_Opto1.xlsx'
+elif mouse_num == 2 and not inactivation:
+    spk_filename = f'data/PV_inactivation/JY/mouse2 - base and opto/Square50_BO_PV5_7_Base_deconv.xlsx'
+    trc_filename = f'data/PV_inactivation/JY/mouse2 - base and opto/Square50_BO_PV5_7_Base.xlsx'
+elif mouse_num == 2 and inactivation:
+    spk_filename = f'data/PV_inactivation/JY/mouse2 - base and opto/Square50_BO_PV5_7_Opto_deconv.xlsx'
+    trc_filename = f'data/PV_inactivation/JY/mouse2 - base and opto/Square50_BO_PV5_7_Opto.xlsx'
+elif mouse_num == 3 and not inactivation:
+    spk_filename = f'data/PV_inactivation/JY/mouse3 - base and chemo/Square50_BCB12_PV6_2_2_Base_deconv.xlsx'
+    trc_filename = f'data/PV_inactivation/JY/mouse3 - base and chemo/Square50_BCB12_PV6_2_2_Base.xlsx'
+elif mouse_num == 3 and inactivation:
+    spk_filename = f'data/PV_inactivation/JY/mouse3 - base and chemo/Square50_BCB12_PV6_2_2_Chemo_deconv.xlsx'
+    trc_filename = f'data/PV_inactivation/JY/mouse3 - base and chemo/Square50_BCB12_PV6_2_2_Chemo.xlsx'
 
-# Read the CSV file
+# Read the excel file
 df = pd.read_csv(trc_filename, header=None)
 
 # Get cell numbers
@@ -28,20 +48,19 @@ cell_numbers = df.iloc[0].dropna().tolist()[1:]
 spike_times = {cell: [] for cell in cell_numbers}
 
 # Get time data
-time_data = [float(i) for i in df.iloc[2:, 0].tolist()]
+time_data = [float(i) for i in df.iloc[1:, 1].tolist()]
 start_time = time_data[0]
 time_data = [time_data[i] - start_time for i in range(len(time_data))]
 
 with open(spk_filename, 'r') as file:
     csv_reader = csv.reader(file)
-    next(csv_reader)  # Skip the header row
+    next(csv_reader) # Skip the header row
     for row in csv_reader:
-        time = float(row[0])
-        cell = row[1]
-        if cell in spike_times:
-            spike_times[cell].append(time)
+        time = float(row[1]) - start_time
+        cell = row[2]
+        spike_times[cell].append(time)
 
-traj_time, x_pos, y_pos, head_dir, velocity = rat_trajectory(shape)
+traj_time, x_pos, y_pos, head_dir, velocity = rat_trajectory_PV(inactivation, mouse_num)
 
 ## NaN interpolation ##
 # For x_pos
@@ -62,10 +81,17 @@ hd_interp = head_dir.copy()
 hd_valid = np.where(~invalid_hd)[0]
 hd_interp[invalid_hd] = np.interp(np.where(invalid_hd)[0], hd_valid, head_dir[hd_valid])
 
+# For vel
+invalide_vel = np.isnan(velocity)
+vel_interp = velocity.copy()
+vel_valid = np.where(~invalide_vel)[0]
+vel_interp[invalide_vel] = np.interp(np.where(invalide_vel)[0], vel_valid, velocity[vel_valid])
+
 # Update the original arrays
 x_pos = x_pos_interp
 y_pos = y_pos_interp
 head_dir = hd_interp
+velocity = vel_interp
 
 # discard index where velocity < threshold
 threshold = 2
@@ -140,4 +166,4 @@ for cell_name in spike_times.keys(): ###########
 
     # Adjust layout and display
     plt.tight_layout()
-    plt.savefig(f'Figures/MEC_inactivation/{cell_name}.png')
+    plt.savefig(f'Figures/PV_inactivation/mouse-{mouse_num}/{inactivation}/{cell_name}_{inactivation}.png')
