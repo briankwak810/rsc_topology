@@ -320,5 +320,5 @@ def plot_average_firing_rate_PV(inactivation, mouse_num):
 
 # Example usage:
 
-cell_indices = [3, 10, 11, 25, 26, 27, 31, 35, 40, 42, 49, 50, 59, 61, 62, 64, 65, 68, 77, 78, 80, 83, 86, 91, 92, 93, 0, 1, 4, 7, 19, 22, 24, 28, 33, 36, 46, 52, 53, 66]
-plot_average_firing_rate_PV(False, 2)
+cell_indices = [3, 4, 6, 7, 9, 14, 15, 21, 22]
+plot_average_firing_rate_mec(cell_indices, False)
