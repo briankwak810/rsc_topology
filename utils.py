@@ -155,15 +155,18 @@ def plot_lifespan(topology_dgms, shuffled_max_lifespan, ax, label_vis, maxdim):
 
 def drawTopologyPV(cebra_posdir3, cebra_posdir8, cebra_posdir16, shuffled_cebra_posdir3, shuffled_cebra_posdir8, shuffled_cebra_posdir16, seed, maxdim, mouse_num, inactivation, namestring):
     np.random.seed(seed)
-    random_idx=np.random.permutation(np.arange(len(cebra_posdir3)))[:2000]
+    random_idx_arr=[]
     topology_dimension = {}
     for embedding in [cebra_posdir3, cebra_posdir8, cebra_posdir16]:
+        random_idx = np.random.permutation(np.arange(len(embedding)))[:2000]
+        random_idx_arr.append(random_idx)
         ripser_output=ripser.ripser(embedding[random_idx], maxdim=maxdim, coeff=47)
         dimension = embedding.shape[1]
         topology_dimension[dimension] = ripser_output
 
     topology_random_dimension = {}
-    for embedding in [shuffled_cebra_posdir3, shuffled_cebra_posdir8, shuffled_cebra_posdir16]:
+    for i, embedding in enumerate([shuffled_cebra_posdir3, shuffled_cebra_posdir8, shuffled_cebra_posdir16]):
+        random_idx = random_idx_arr[i]
         ripser_output=ripser.ripser(embedding[random_idx], maxdim=maxdim, coeff=47)
         dimension = embedding.shape[1]
         topology_random_dimension[dimension] = ripser_output
@@ -186,15 +189,18 @@ def drawTopologyPV(cebra_posdir3, cebra_posdir8, cebra_posdir16, shuffled_cebra_
 
 def drawTopologyMEC(cebra_posdir3, cebra_posdir8, cebra_posdir16, shuffled_cebra_posdir3, shuffled_cebra_posdir8, shuffled_cebra_posdir16, seed, maxdim, inactivation, namestring):
     np.random.seed(seed)
-    random_idx=np.random.permutation(np.arange(len(cebra_posdir3)))[:2000]
+    random_idx_arr=[]
     topology_dimension = {}
     for embedding in [cebra_posdir3, cebra_posdir8, cebra_posdir16]:
+        random_idx = np.random.permutation(np.arange(len(embedding)))[:2000]
+        random_idx_arr.append(random_idx)
         ripser_output=ripser.ripser(embedding[random_idx], maxdim=maxdim, coeff=47)
         dimension = embedding.shape[1]
         topology_dimension[dimension] = ripser_output
 
     topology_random_dimension = {}
-    for embedding in [shuffled_cebra_posdir3, shuffled_cebra_posdir8, shuffled_cebra_posdir16]:
+    for i, embedding in enumerate([shuffled_cebra_posdir3, shuffled_cebra_posdir8, shuffled_cebra_posdir16]):
+        random_idx = random_idx_arr[i]
         ripser_output=ripser.ripser(embedding[random_idx], maxdim=maxdim, coeff=47)
         dimension = embedding.shape[1]
         topology_random_dimension[dimension] = ripser_output

@@ -7,6 +7,7 @@ from scipy.interpolate import interp1d
 from scipy.ndimage import gaussian_filter1d
 import pandas as pd
 from utils import *
+from downsampling import *
 
 import cebra
 from cebra import CEBRA
@@ -441,7 +442,7 @@ shuffled_cebra_posdir3 = np.concatenate([shuffled_cebra_posdir3_1, shuffled_cebr
 shuffled_cebra_posdir8 = np.concatenate([shuffled_cebra_posdir8_1, shuffled_cebra_posdir8_2])
 shuffled_cebra_posdir16 = np.concatenate([shuffled_cebra_posdir16_1, shuffled_cebra_posdir16_2])
 
-np.savez('embedding_arrays.npz',
+np.savez('shuffled_embedding_arrays.npz',
          shuffled_cebra_posdir3_1=shuffled_cebra_posdir3_1,
          shuffled_cebra_posdir3_2=shuffled_cebra_posdir3_2,
          shuffled_cebra_posdir8_1=shuffled_cebra_posdir8_1,
@@ -449,10 +450,71 @@ np.savez('embedding_arrays.npz',
          shuffled_cebra_posdir16_1=shuffled_cebra_posdir16_1,
          shuffled_cebra_posdir16_2=shuffled_cebra_posdir16_2)
 
-print("All 12 arrays saved independently.")
+print("All 6 arrays saved independently.")
 
 ################# TOPOLOGY ####################
 
-drawTopologyMEC(cebra_posdir3, cebra_posdir8, cebra_posdir16, shuffled_cebra_posdir3, shuffled_cebra_posdir8, shuffled_cebra_posdir16, seed, maxdim, inactivation, "12")
-drawTopologyMEC(cebra_posdir3_1, cebra_posdir8_1, cebra_posdir16_1, shuffled_cebra_posdir3_1, shuffled_cebra_posdir8_1, shuffled_cebra_posdir16_1, seed, maxdim, inactivation, "1")
-drawTopologyMEC(cebra_posdir3_2, cebra_posdir8_2, cebra_posdir16_2, shuffled_cebra_posdir3_2, shuffled_cebra_posdir8_2, shuffled_cebra_posdir16_2, seed, maxdim, inactivation, "2")
+embedding_arrays = np.load('embedding_arrays.npz')
+shuffled_arrays = np.load('shuffled_embedding_arrays.npz')
+
+# Process each array pair in the npz files
+downsampled_arrays = {}
+adjusted_shuffled_arrays = {}
+
+for name, array in embedding_arrays.items():
+    shuffled_name = f"shuffled_{name}"
+    if shuffled_name in shuffled_arrays:
+        downsampled, adjusted_shuffled = process_array(array, shuffled_arrays[shuffled_name], name)
+        downsampled_arrays[name] = downsampled
+        adjusted_shuffled_arrays[shuffled_name] = adjusted_shuffled
+    else:
+        print(f"Warning: No corresponding shuffled array found for {name}")
+
+# Save the downsampled and adjusted shuffled arrays
+np.savez('downsampled_embedding_arrays.npz', **downsampled_arrays)
+np.savez('adjusted_shuffled_embedding_arrays.npz', **adjusted_shuffled_arrays)
+print("\nAll downsampled and adjusted shuffled arrays saved successfully.")
+
+# Print summary
+print("\nSummary:")
+for name, array in downsampled_arrays.items():
+    original_size = len(embedding_arrays[name])
+    downsampled_size = len(array)
+    shuffled_size = len(adjusted_shuffled_arrays[f"shuffled_{name}"])
+    percentage = downsampled_size / original_size
+    print(f"{name}: Original {original_size}, Downsampled {downsampled_size}, Adjusted Shuffled {shuffled_size} ({percentage:.2%})")
+
+
+# Set up function calls for topology calculation
+topology_calls = [
+    (
+        downsampled_arrays['cebra_posdir3_1'],
+        downsampled_arrays['cebra_posdir8_1'],
+        downsampled_arrays['cebra_posdir16_1'],
+        adjusted_shuffled_arrays['shuffled_cebra_posdir3_1'],
+        adjusted_shuffled_arrays['shuffled_cebra_posdir8_1'],
+        adjusted_shuffled_arrays['shuffled_cebra_posdir16_1'],
+        seed, maxdim, inactivation, "1"
+    ),
+    (
+        downsampled_arrays['cebra_posdir3_2'],
+        downsampled_arrays['cebra_posdir8_2'],
+        downsampled_arrays['cebra_posdir16_2'],
+        adjusted_shuffled_arrays['shuffled_cebra_posdir3_2'],
+        adjusted_shuffled_arrays['shuffled_cebra_posdir8_2'],
+        adjusted_shuffled_arrays['shuffled_cebra_posdir16_2'],
+        seed, maxdim, inactivation, "2"
+    ),
+    (
+        np.concatenate([downsampled_arrays['cebra_posdir3_1'], downsampled_arrays['cebra_posdir3_2']]),
+        np.concatenate([downsampled_arrays['cebra_posdir8_1'], downsampled_arrays['cebra_posdir8_2']]),
+        np.concatenate([downsampled_arrays['cebra_posdir16_1'], downsampled_arrays['cebra_posdir16_2']]),
+        np.concatenate([adjusted_shuffled_arrays['shuffled_cebra_posdir3_1'], adjusted_shuffled_arrays['shuffled_cebra_posdir3_2']]),
+        np.concatenate([adjusted_shuffled_arrays['shuffled_cebra_posdir8_1'], adjusted_shuffled_arrays['shuffled_cebra_posdir8_2']]),
+        np.concatenate([adjusted_shuffled_arrays['shuffled_cebra_posdir16_1'], adjusted_shuffled_arrays['shuffled_cebra_posdir16_2']]),
+        seed, maxdim, inactivation, "12"
+    )
+]
+
+for args in topology_calls:
+    drawTopologyMEC(*args)

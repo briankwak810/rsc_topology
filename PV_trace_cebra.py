@@ -6,6 +6,7 @@ from trajectory import rat_trajectory, rat_trajectory_mec, rat_trajectory_PV
 from scipy.interpolate import interp1d
 import pandas as pd
 from utils import *
+from downsampling import *
 
 import cebra
 from cebra import CEBRA
@@ -14,7 +15,7 @@ from cebra import CEBRA
 import argparse
 
 # Set up the argument parser
-parser = argparse.ArgumentParser(description="Your script description")
+parser = argparse.ArgumentParser(description="PV trace cebra parameters")
 
 # Add arguments for each parameter
 parser.add_argument('--mouse_num', type=int, default=2, help="Number of mice")
@@ -39,12 +40,12 @@ ply_name = f'PV_{mouse_num}_{inactivation}'
 print(f"Starting trial {mouse_num}-{inactivation}.")
 
 #1
-index1 = [2, 3, 5, 6, 10, 13, 14, 17, 19, 21, 26, 32, 33, 38, 40, 43, 44, 47, 48, 54, 57, 63, 71, 73, 74]
-index2 = [9, 16, 18, 20, 22, 27, 36, 39, 45, 52, 53, 58, 69]
+# index1 = [2, 3, 5, 6, 10, 13, 14, 17, 19, 21, 26, 32, 33, 38, 40, 43, 44, 47, 48, 54, 57, 63, 71, 73, 74]
+# index2 = [9, 16, 18, 20, 22, 27, 36, 39, 45, 52, 53, 58, 69]
 
 #2
-# index1 = [3, 10, 11, 25, 26, 27, 31, 35, 40, 42, 49, 50, 59, 61, 62, 64, 65, 68, 77, 78, 80, 83, 86, 91, 92, 93]
-# index2 = [14, 29, 30, 34, 39, 41, 44, 45, 48, 60, 71, 73, 76, 81, 82, 84, 87, 88, 89] #False
+index1 = [3, 10, 11, 25, 26, 27, 31, 35, 40, 42, 49, 50, 59, 61, 62, 64, 65, 68, 77, 78, 80, 83, 86, 91, 92, 93]
+index2 = [14, 29, 30, 34, 39, 41, 44, 45, 48, 60, 71, 73, 76, 81, 82, 84, 87, 88, 89] #False
 
 #3
 # index1 = [0, 2, 4, 8, 9, 11, 14, 17, 19, 25, 26, 27, 28, 30, 34, 35, 36, 38, 42, 46, 48, 52, 53, 56, 61, 65, 69, 71, 73, 74, 77, 78, 79, 81, 82, 83, 84, 86, 91, 93, 96, 98, 99, 100, 101, 105, 106, 107]
@@ -200,21 +201,11 @@ cebra_posdir16_model = CEBRA(model_architecture='offset10-model',
                         hybrid=False)
 
 cebra_posdir3_model.fit(neural1, continuous_index1)
-cebra_posdir3_model.save("models/cebra_posdir3_model.pt")
-
 cebra_posdir8_model.fit(neural1, continuous_index1)
-cebra_posdir8_model.save("models/cebra_posdir8_model.pt")
-
 cebra_posdir16_model.fit(neural1, continuous_index1)
-cebra_posdir16_model.save("models/cebra_posdir16_model.pt")
 
-cebra_posdir3_model = cebra.CEBRA.load("models/cebra_posdir3_model.pt")
 cebra_posdir3_1 = cebra_posdir3_model.transform(neural1)
-
-cebra_posdir8_model = cebra.CEBRA.load("models/cebra_posdir8_model.pt")
 cebra_posdir8_1 = cebra_posdir8_model.transform(neural1)
-
-cebra_posdir16_model = cebra.CEBRA.load("models/cebra_posdir16_model.pt")
 cebra_posdir16_1 = cebra_posdir16_model.transform(neural1)
 
 print("CEBRA embedding for nerual1 complete.")
@@ -311,22 +302,6 @@ colors[:len(cebra_posdir3_1)] = blue
 colors[len(cebra_posdir3_2):] = orange
 
 colors_uint8 = (colors * 255).astype(np.uint8)
-
-# Function to write colored PLY file
-def write_colored_ply(filename, points, colors):
-    with open(filename, 'w') as f:
-        f.write("ply\n")
-        f.write("format ascii 1.0\n")
-        f.write(f"element vertex {len(points)}\n")
-        f.write("property float x\n")
-        f.write("property float y\n")
-        f.write("property float z\n")
-        f.write("property uchar red\n")
-        f.write("property uchar green\n")
-        f.write("property uchar blue\n")
-        f.write("end_header\n")
-        for point, color in zip(points, colors):
-            f.write(f"{point[0]} {point[1]} {point[2]} {color[0]} {color[1]} {color[2]}\n")
 
 # Write the colored PLY file
 dim = 3
@@ -440,7 +415,7 @@ shuffled_cebra_posdir3 = np.concatenate([shuffled_cebra_posdir3_1, shuffled_cebr
 shuffled_cebra_posdir8 = np.concatenate([shuffled_cebra_posdir8_1, shuffled_cebra_posdir8_2])
 shuffled_cebra_posdir16 = np.concatenate([shuffled_cebra_posdir16_1, shuffled_cebra_posdir16_2])
 
-np.savez('embedding_arrays.npz',
+np.savez('shuffled_embedding_arrays.npz',
          shuffled_cebra_posdir3_1=shuffled_cebra_posdir3_1,
          shuffled_cebra_posdir3_2=shuffled_cebra_posdir3_2,
          shuffled_cebra_posdir8_1=shuffled_cebra_posdir8_1,
@@ -448,10 +423,71 @@ np.savez('embedding_arrays.npz',
          shuffled_cebra_posdir16_1=shuffled_cebra_posdir16_1,
          shuffled_cebra_posdir16_2=shuffled_cebra_posdir16_2)
 
-print("All 12 arrays saved independently.")
+print("All 6 arrays saved independently.")
 
 ################# TOPOLOGY ####################
 
-drawTopologyPV(cebra_posdir3, cebra_posdir8, cebra_posdir16, shuffled_cebra_posdir3, shuffled_cebra_posdir8, shuffled_cebra_posdir16, seed, maxdim, mouse_num, inactivation, "12")
-drawTopologyPV(cebra_posdir3_1, cebra_posdir8_1, cebra_posdir16_1, shuffled_cebra_posdir3_1, shuffled_cebra_posdir8_1, shuffled_cebra_posdir16_1, seed, maxdim, mouse_num, inactivation, "1")
-drawTopologyPV(cebra_posdir3_2, cebra_posdir8_2, cebra_posdir16_2, shuffled_cebra_posdir3_2, shuffled_cebra_posdir8_2, shuffled_cebra_posdir16_2, seed, maxdim, mouse_num, inactivation, "2")
+embedding_arrays = np.load('embedding_arrays.npz')
+shuffled_arrays = np.load('shuffled_embedding_arrays.npz')
+
+# Process each array pair in the npz files
+downsampled_arrays = {}
+adjusted_shuffled_arrays = {}
+
+for name, array in embedding_arrays.items():
+    shuffled_name = f"shuffled_{name}"
+    if shuffled_name in shuffled_arrays:
+        downsampled, adjusted_shuffled = process_array(array, shuffled_arrays[shuffled_name], name)
+        downsampled_arrays[name] = downsampled
+        adjusted_shuffled_arrays[shuffled_name] = adjusted_shuffled
+    else:
+        print(f"Warning: No corresponding shuffled array found for {name}")
+
+# Save the downsampled and adjusted shuffled arrays
+np.savez('downsampled_embedding_arrays.npz', **downsampled_arrays)
+np.savez('adjusted_shuffled_embedding_arrays.npz', **adjusted_shuffled_arrays)
+print("\nAll downsampled and adjusted shuffled arrays saved successfully.")
+
+# Print summary
+print("\nSummary:")
+for name, array in downsampled_arrays.items():
+    original_size = len(embedding_arrays[name])
+    downsampled_size = len(array)
+    shuffled_size = len(adjusted_shuffled_arrays[f"shuffled_{name}"])
+    percentage = downsampled_size / original_size
+    print(f"{name}: Original {original_size}, Downsampled {downsampled_size}, Adjusted Shuffled {shuffled_size} ({percentage:.2%})")
+
+
+# Set up function calls for topology calculation
+topology_calls = [
+    (
+        downsampled_arrays['cebra_posdir3_1'],
+        downsampled_arrays['cebra_posdir8_1'],
+        downsampled_arrays['cebra_posdir16_1'],
+        adjusted_shuffled_arrays['shuffled_cebra_posdir3_1'],
+        adjusted_shuffled_arrays['shuffled_cebra_posdir8_1'],
+        adjusted_shuffled_arrays['shuffled_cebra_posdir16_1'],
+        seed, maxdim, mouse_num, inactivation, "1"
+    ),
+    (
+        downsampled_arrays['cebra_posdir3_2'],
+        downsampled_arrays['cebra_posdir8_2'],
+        downsampled_arrays['cebra_posdir16_2'],
+        adjusted_shuffled_arrays['shuffled_cebra_posdir3_2'],
+        adjusted_shuffled_arrays['shuffled_cebra_posdir8_2'],
+        adjusted_shuffled_arrays['shuffled_cebra_posdir16_2'],
+        seed, maxdim, mouse_num, inactivation, "2"
+    ),
+    (
+        np.concatenate([downsampled_arrays['cebra_posdir3_1'], downsampled_arrays['cebra_posdir3_2']]),
+        np.concatenate([downsampled_arrays['cebra_posdir8_1'], downsampled_arrays['cebra_posdir8_2']]),
+        np.concatenate([downsampled_arrays['cebra_posdir16_1'], downsampled_arrays['cebra_posdir16_2']]),
+        np.concatenate([adjusted_shuffled_arrays['shuffled_cebra_posdir3_1'], adjusted_shuffled_arrays['shuffled_cebra_posdir3_2']]),
+        np.concatenate([adjusted_shuffled_arrays['shuffled_cebra_posdir8_1'], adjusted_shuffled_arrays['shuffled_cebra_posdir8_2']]),
+        np.concatenate([adjusted_shuffled_arrays['shuffled_cebra_posdir16_1'], adjusted_shuffled_arrays['shuffled_cebra_posdir16_2']]),
+        seed, maxdim, mouse_num, inactivation, "12"
+    )
+]
+
+for args in topology_calls:
+    drawTopologyPV(*args)
